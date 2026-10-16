@@ -44,6 +44,7 @@ interface ViewModeControllerProps {
   isSimulating: boolean;
   onOpenSimulator: () => void;
   simulatedPsi: number;
+  deviceInfo?: import('../utils/useDeviceDetection').DeviceInfo;
 }
 
 export const ViewModeController: React.FC<ViewModeControllerProps> = ({
@@ -63,6 +64,7 @@ export const ViewModeController: React.FC<ViewModeControllerProps> = ({
   isSimulating,
   onOpenSimulator,
   simulatedPsi,
+  deviceInfo,
 }) => {
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [controlsExpanded, setControlsExpanded] = useState(false);
@@ -85,60 +87,78 @@ export const ViewModeController: React.FC<ViewModeControllerProps> = ({
   return (
     <div className="bg-slate-900 text-white border-b border-slate-800 text-xs py-2 px-4 select-none transition-colors duration-200">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Left Side: View Mode Switcher */}
-        <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
-          <button
-            onClick={() => onSetViewMode('responsive')}
-            title="Auto-adapts to browser screen width"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
-              viewMode === 'responsive'
-                ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
-            <span className="hidden sm:inline">{t.viewModeResponsive}</span>
-          </button>
+        {/* Left Side: View Mode Switcher & Auto Device Detector */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => onSetViewMode('responsive')}
+              title="Auto-adapts to browser screen width"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
+                viewMode === 'responsive'
+                  ? 'bg-slate-800 text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">{t.viewModeResponsive}</span>
+            </button>
 
-          <button
-            onClick={() => onSetViewMode('mobile')}
-            title="Dedicated Smartphone View with touch frame"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
-              viewMode === 'mobile'
-                ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{t.viewModeMobile}</span>
-          </button>
+            <button
+              onClick={() => onSetViewMode('mobile')}
+              title="Dedicated Smartphone View with touch frame"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
+                viewMode === 'mobile'
+                  ? 'bg-slate-800 text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{t.viewModeMobile}</span>
+            </button>
 
-          <button
-            onClick={() => onSetViewMode('dual')}
-            title="Side-by-side dynamic view of Air Monitor & Itinerary pages"
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
-              viewMode === 'dual'
-                ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Columns className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden md:inline">{t.viewModeDual}</span>
-            <span className="md:hidden">Dual</span>
-          </button>
+            <button
+              onClick={() => onSetViewMode('dual')}
+              title="Side-by-side dynamic view of Air Monitor & Itinerary pages"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
+                viewMode === 'dual'
+                  ? 'bg-slate-800 text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Columns className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">{t.viewModeDual}</span>
+              <span className="md:hidden">Dual</span>
+            </button>
 
-          <button
-            onClick={() => onSetViewMode('desktop')}
-            title="Full-bleed Desktop WebApp"
-            className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
-              viewMode === 'desktop'
-                ? 'bg-slate-800 text-white shadow-xs font-semibold'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Monitor className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{t.viewModeDesktop}</span>
-          </button>
+            <button
+              onClick={() => onSetViewMode('desktop')}
+              title="Full-bleed Desktop WebApp"
+              className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-medium transition-all ${
+                viewMode === 'desktop'
+                  ? 'bg-slate-800 text-white shadow-xs font-semibold'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Monitor className="w-3.5 h-3.5 text-indigo-400" />
+              <span>{t.viewModeDesktop}</span>
+            </button>
+          </div>
+
+          {/* Auto-detected Device Indicator Badge */}
+          {deviceInfo && (
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300 text-[11px]">
+              {deviceInfo.isMobile ? (
+                <Smartphone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              ) : (
+                <Monitor className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              )}
+              <span>
+                {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablet' : 'Desktop'}
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="text-emerald-400 font-semibold">{t.autoAdapted || 'Auto-adapted'}</span>
+            </div>
+          )}
         </div>
 
         {/* Center: Dynamic Scaling & Viewing Done Progress */}

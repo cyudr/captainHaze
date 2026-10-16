@@ -38,9 +38,18 @@ export interface ItinerarySubstitution {
   outdoorAttraction: string;
   outdoorZone: string;
   outdoorDescription: string;
-  hazeRisk: 'Moderate' | 'High' | 'Severe';
   indoorAlternative: string;
-  alternativeCategory: 'Museum & Culture' | 'Botanical Dome' | 'Mega Entertainment' | 'Shopping & Dining' | 'Family & Kids';
+  hazeRisk: 'Moderate' | 'High' | 'Severe';
+  alternativeCategory:
+    | 'Attractions & Domes'
+    | 'Indoor Eateries'
+    | 'Entertainment Joints'
+    | 'Clinics & Pharmacies'
+    | 'Museum & Culture'
+    | 'Botanical Dome'
+    | 'Mega Entertainment'
+    | 'Shopping & Dining'
+    | 'Family & Kids';
   location: string;
   nearestMrt: string;
   indoorAirQuality: 'HEPA Filtered' | 'Fully Enclosed AC' | 'Underground Sheltered';

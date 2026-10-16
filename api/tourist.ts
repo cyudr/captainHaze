@@ -37,13 +37,8 @@ export interface TouristAttraction {
   suggestedIndoorSubstitute?: string;
 }
 
-// In-memory cache for fast serverless responses
-let cachedAttractions: TouristAttraction[] | null = null;
-let lastFetchTime = 0;
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-// Curated baseline attractions with exact coordinates as robust fallback
-const CURATED_TOURIST_ATTRACTIONS: TouristAttraction[] = [
+// Curated baseline attractions with exact coordinates
+export const CURATED_TOURIST_ATTRACTIONS: TouristAttraction[] = [
   {
     id: 'gardens-by-the-bay',
     name: 'Gardens by the Bay & Bio-Domes',
@@ -193,6 +188,12 @@ const CURATED_TOURIST_ATTRACTIONS: TouristAttraction[] = [
   },
 ];
 
+// In-memory cache for fast serverless responses initialized with curated STB dataset
+let cachedAttractions: TouristAttraction[] = [...CURATED_TOURIST_ATTRACTIONS];
+let lastFetchTime = 0;
+let rateLimitedUntil = 0;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
 function assignRegion(lat: number, lng: number): 'central' | 'south' | 'north' | 'east' | 'west' {
   if (lat > 1.39) return 'north';
   if (lat < 1.27) return 'south';
@@ -216,27 +217,42 @@ function determineIndoor(name: string, overview: string): { isIndoor: boolean; r
 }
 
 async function fetchFromDataGovSg(): Promise<TouristAttraction[]> {
+  const now = Date.now();
+  if (now < rateLimitedUntil) {
+    return cachedAttractions;
+  }
+
   const datasetId = 'd_0f2f47515425404e6c9d2a040dd87354';
   const initiateUrl = `https://api-open.data.gov.sg/v1/public/api/datasets/${datasetId}/initiate-download`;
 
-  const initRes = await fetch(initiateUrl, {
-    headers: { Accept: 'application/json' },
-  });
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  const apiKey = process.env.DATA_GOV_SG_API_KEY || process.env.DATA_GOV_API_KEY;
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+  }
+
+  const initRes = await fetch(initiateUrl, { headers });
+
+  if (initRes.status === 429) {
+    // Back off for 15 minutes without throwing or logging error
+    rateLimitedUntil = now + 15 * 60 * 1000;
+    return cachedAttractions;
+  }
 
   if (!initRes.ok) {
-    throw new Error(`data.gov.sg initiate returned status ${initRes.status}`);
+    return cachedAttractions;
   }
 
   const initData = await initRes.json();
   const fileUrl = initData?.data?.url;
 
   if (!fileUrl) {
-    throw new Error('No download URL returned from data.gov.sg');
+    return cachedAttractions;
   }
 
   const geoRes = await fetch(fileUrl);
   if (!geoRes.ok) {
-    throw new Error(`Failed to download GeoJSON file: status ${geoRes.status}`);
+    return cachedAttractions;
   }
 
   const geoJson = await geoRes.json();
@@ -275,15 +291,17 @@ async function fetchFromDataGovSg(): Promise<TouristAttraction[]> {
     });
   }
 
-  // Merge with curated list so top sights with known high HEPA quality are always included
-  const combined = [...CURATED_TOURIST_ATTRACTIONS];
-  for (const p of parsed) {
-    if (!combined.some((c) => c.name.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(c.name.toLowerCase()))) {
-      combined.push(p);
+  if (parsed.length > 0) {
+    const combined = [...CURATED_TOURIST_ATTRACTIONS];
+    for (const p of parsed) {
+      if (!combined.some((c) => c.name.toLowerCase().includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(c.name.toLowerCase()))) {
+        combined.push(p);
+      }
     }
+    return combined;
   }
 
-  return combined;
+  return cachedAttractions;
 }
 
 export default async function handler(req: any, res?: any) {
@@ -306,28 +324,26 @@ export default async function handler(req: any, res?: any) {
 
   try {
     const now = Date.now();
-    let attractions = cachedAttractions;
-
-    if (!attractions || now - lastFetchTime > CACHE_TTL_MS) {
+    if (now - lastFetchTime > CACHE_TTL_MS && now > rateLimitedUntil) {
       try {
-        attractions = await fetchFromDataGovSg();
-        cachedAttractions = attractions;
-        lastFetchTime = now;
-      } catch (err) {
-        console.warn('Using curated tourist attractions fallback:', err);
-        attractions = cachedAttractions || CURATED_TOURIST_ATTRACTIONS;
+        const fresh = await fetchFromDataGovSg();
+        if (fresh && fresh.length > 0) {
+          cachedAttractions = fresh;
+        }
+      } catch {
+        // Fallback gracefully without console error
       }
+      lastFetchTime = now;
     }
 
-    // Handle query filtering (e.g. region, isIndoor, search)
-    const query = req.query || (req.url ? Object.fromEntries(new URL(req.url, 'http://localhost').searchParams) : {});
-    let result = [...attractions];
+    const query: any = (req && (req as any).query) ? (req as any).query : {};
+    let result: TouristAttraction[] = [...cachedAttractions];
 
     if (query.region && query.region !== 'national') {
-      result = result.filter((a) => a.region === query.region);
+      result = result.filter((a: TouristAttraction) => a.region === query.region);
     }
     if (query.indoor === 'true') {
-      result = result.filter((a) => a.isIndoor);
+      result = result.filter((a: TouristAttraction) => a.isIndoor);
     }
     if (query.q && typeof query.q === 'string') {
       const qLower = query.q.toLowerCase();

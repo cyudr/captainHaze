@@ -6,6 +6,7 @@ import pm25Handler from './api/pm25.ts';
 import psiHandler from './api/psi.ts';
 import mapHandler from './api/map.ts';
 import touristHandler from './api/tourist.ts';
+import weatherHandler from './api/weather.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ async function startServer() {
   app.all('/api/psi', (req, res) => psiHandler(req, res));
   app.all('/api/map', (req, res) => mapHandler(req, res));
   app.all('/api/tourist', (req, res) => touristHandler(req, res));
+  app.all('/api/weather', (req, res) => weatherHandler(req, res));
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.resolve(__dirname, 'dist')));

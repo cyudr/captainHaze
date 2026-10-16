@@ -23,7 +23,9 @@ import { RegionalPsiData, SingaporeRegion } from './types/haze';
 import { FALLBACK_PSI_DATA } from './data/hazeData';
 import { LocationMatchResult } from './utils/locationResolver';
 import { ThemeMode, getInitialTheme, applyTheme } from './utils/theme';
-import { AppLanguage, getInitialLanguage, saveLanguage, TRANSLATIONS } from './utils/i18n';
+import { AppLanguage, getInitialLanguage, saveLanguage } from './utils/i18n';
+import { useDeviceDetection } from './utils/useDeviceDetection';
+import { LanguageProvider } from './context/LanguageContext';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('overview');
@@ -43,6 +45,9 @@ export default function App() {
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [simulatedPsi, setSimulatedPsi] = useState<number | null>(null);
   const [alertThresholdEnabled, setAlertThresholdEnabled] = useState(true);
+
+  // Auto Device Detection
+  const deviceInfo = useDeviceDetection();
 
   // View Mode & Dynamic Scaling States
   const [viewMode, setViewMode] = useState<ViewMode>('responsive');
@@ -89,7 +94,9 @@ export default function App() {
     setIsRefreshing(true);
     try {
       const res = await fetchLiveSingaporePsi();
-      setRegionsData(res.data);
+      if (res.data) {
+        setRegionsData(res.data);
+      }
       setIsLiveFeed(res.isLive);
     } catch (err) {
       console.error('Error fetching live PSI:', err);
@@ -194,7 +201,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'itinerary' && <ItinerarySubstitutionEngine />}
+        {activeTab === 'itinerary' && <ItinerarySubstitutionEngine currentPsi={effectivePsi} status={effectiveRegionData.status} />}
 
         {activeTab === 'supplies' && <WhatToBuyGuide />}
 
@@ -206,90 +213,93 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-slate-900 selection:text-white dark:selection:bg-sky-500">
-      {/* Top View Controller Bar: Mode switcher, scale, theme, language */}
-      <ViewModeController
-        viewMode={viewMode}
-        onSetViewMode={setViewMode}
-        pageScale={pageScale}
-        onSetPageScale={setPageScale}
-        splitRatio={splitRatio}
-        onSetSplitRatio={setSplitRatio}
-        scaleByViewingEnabled={scaleByViewingEnabled}
-        onToggleScaleByViewing={() => setScaleByViewingEnabled(!scaleByViewingEnabled)}
-        viewingProgress={viewingProgress}
-        themeMode={themeMode}
-        onSetThemeMode={setThemeMode}
-        currentLanguage={language}
-        onSetLanguage={handleSetLanguage}
-        isSimulating={simulatedPsi !== null}
-        onOpenSimulator={() => setSimulatorOpen(true)}
-        simulatedPsi={simulatedPsi ?? effectivePsi}
-      />
+    <LanguageProvider initialLanguage={language} onLanguageChange={handleSetLanguage}>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200 selection:bg-slate-900 selection:text-white dark:selection:bg-sky-500">
+        {/* Top View Controller Bar: Mode switcher, scale, theme, language, device detection */}
+        <ViewModeController
+          viewMode={viewMode}
+          onSetViewMode={setViewMode}
+          pageScale={pageScale}
+          onSetPageScale={setPageScale}
+          splitRatio={splitRatio}
+          onSetSplitRatio={setSplitRatio}
+          scaleByViewingEnabled={scaleByViewingEnabled}
+          onToggleScaleByViewing={() => setScaleByViewingEnabled(!scaleByViewingEnabled)}
+          viewingProgress={viewingProgress}
+          themeMode={themeMode}
+          onSetThemeMode={setThemeMode}
+          currentLanguage={language}
+          onSetLanguage={handleSetLanguage}
+          isSimulating={simulatedPsi !== null}
+          onOpenSimulator={() => setSimulatorOpen(true)}
+          simulatedPsi={simulatedPsi ?? effectivePsi}
+          deviceInfo={deviceInfo}
+        />
 
-      {/* Top Advisory Banner (Active when PSI > 100) */}
-      <HazeAlertBanner
-        psi={effectivePsi}
-        status={effectiveRegionData.status}
-        onNavigateToItinerary={() => setActiveTab('itinerary')}
-        onNavigateToSupplies={() => setActiveTab('supplies')}
-      />
+        {/* Top Advisory Banner (Active when PSI > 100) */}
+        <HazeAlertBanner
+          psi={effectivePsi}
+          status={effectiveRegionData.status}
+          onNavigateToItinerary={() => setActiveTab('itinerary')}
+          onNavigateToSupplies={() => setActiveTab('supplies')}
+        />
 
-      {/* Primary Top Bar */}
-      <Navbar
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        onOpenSimulator={() => setSimulatorOpen(true)}
-        isSimulating={simulatedPsi !== null}
-        simulatedPsi={simulatedPsi ?? effectivePsi}
-      />
+        {/* Primary Top Bar */}
+        <Navbar
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          onOpenSimulator={() => setSimulatorOpen(true)}
+          isSimulating={simulatedPsi !== null}
+          simulatedPsi={simulatedPsi ?? effectivePsi}
+        />
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {viewMode === 'mobile' ? (
-          <MobileDeviceFrame
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            language={language}
-            pageScale={pageScale}
-            onExitMobilePreview={() => setViewMode('responsive')}
-          >
-            {renderPageContent()}
-          </MobileDeviceFrame>
-        ) : (
-          <div
-            className="transition-transform duration-300 origin-top"
-            style={{
-              transform: pageScale !== 1 && viewMode !== 'dual' ? `scale(${pageScale})` : undefined,
-            }}
-          >
-            {renderPageContent()}
-          </div>
-        )}
-      </main>
+        {/* Main Viewport Container */}
+        <main className={`flex-1 max-w-7xl w-full mx-auto ${deviceInfo.isMobile ? 'px-3 py-4' : 'px-4 sm:px-6 py-6 sm:py-8'}`}>
+          {viewMode === 'mobile' ? (
+            <MobileDeviceFrame
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              language={language}
+              pageScale={pageScale}
+              onExitMobilePreview={() => setViewMode('responsive')}
+            >
+              {renderPageContent()}
+            </MobileDeviceFrame>
+          ) : (
+            <div
+              className="transition-transform duration-300 origin-top"
+              style={{
+                transform: pageScale !== 1 && viewMode !== 'dual' ? `scale(${pageScale})` : undefined,
+              }}
+            >
+              {renderPageContent()}
+            </div>
+          )}
+        </main>
 
-      {/* Footer */}
-      <Footer onSelectTab={(tab) => setActiveTab(tab)} />
+        {/* Footer */}
+        <Footer onSelectTab={(tab) => setActiveTab(tab)} />
 
-      {/* Mobile Fixed Bottom Navigation (for actual mobile viewports when not in simulated frame) */}
-      <div className="md:hidden">
-        {viewMode !== 'mobile' && (
-          <MobileBottomNav
-            activeTab={activeTab}
-            onSelectTab={setActiveTab}
-            language={language}
-          />
-        )}
+        {/* Mobile Fixed Bottom Navigation (Auto adapted for actual mobile devices or small screens) */}
+        <div className={deviceInfo.isMobile ? 'block' : 'md:hidden'}>
+          {viewMode !== 'mobile' && (
+            <MobileBottomNav
+              activeTab={activeTab}
+              onSelectTab={setActiveTab}
+              language={language}
+            />
+          )}
+        </div>
+
+        {/* Interactive Scenario Simulator Modal */}
+        <HazeSimulatorModal
+          isOpen={simulatorOpen}
+          onClose={() => setSimulatorOpen(false)}
+          isSimulating={simulatedPsi !== null}
+          simulatedPsi={simulatedPsi ?? 75}
+          onApplySimulation={handleApplySimulation}
+        />
       </div>
-
-      {/* Interactive Scenario Simulator Modal */}
-      <HazeSimulatorModal
-        isOpen={simulatorOpen}
-        onClose={() => setSimulatorOpen(false)}
-        isSimulating={simulatedPsi !== null}
-        simulatedPsi={simulatedPsi ?? 75}
-        onApplySimulation={handleApplySimulation}
-      />
-    </div>
+    </LanguageProvider>
   );
 }

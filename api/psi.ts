@@ -23,10 +23,32 @@ export default async function handler(req: any, res?: any) {
     });
   }
 
-  try {
-    // Construct upstream URL with optional query parameters (e.g. date_time, date)
-    const upstreamBase = 'https://api-open.data.gov.sg/v2/real-time/api/psi';
-    const url = new URL(upstreamBase);
+    // Guardrail: If a key variable is configured but empty, return 503 "key not configured" and do not call provider
+    if (
+      (process.env.DATA_GOV_SG_API_KEY !== undefined && process.env.DATA_GOV_SG_API_KEY.trim() === '') ||
+      (process.env.API_KEY !== undefined && process.env.API_KEY.trim() === '')
+    ) {
+      const notConfiguredPayload = {
+        error: 'key not configured',
+        message: 'API key is configured as an empty string. Please set a valid key in environment.',
+      };
+      if (res && typeof res.status === 'function') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        return res.status(503).json(notConfiguredPayload);
+      }
+      return new Response(JSON.stringify(notConfiguredPayload), {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    try {
+      // Construct upstream URL with optional query parameters (e.g. date_time, date)
+      const upstreamBase = 'https://api-open.data.gov.sg/v2/real-time/api/psi';
+      const url = new URL(upstreamBase);
 
     // Extract query parameters from request
     const query = req.query || (req.url ? Object.fromEntries(new URL(req.url, 'http://localhost').searchParams) : {});

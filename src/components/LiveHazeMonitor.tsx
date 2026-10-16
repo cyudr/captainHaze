@@ -12,11 +12,15 @@ import {
   ArrowUpRight,
   Search,
   Navigation,
+  Sparkles,
+  X,
+  ArrowRight,
 } from 'lucide-react';
 import { RegionalPsiData, SingaporeRegion } from '../types/haze';
 import { PSI_ADVISORY_BANDS, IMAGES } from '../data/hazeData';
 import { SingaporeRegionalMap } from './SingaporeRegionalMap';
 import { resolveSingaporeLocation, LocationMatchResult } from '../utils/locationResolver';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LiveHazeMonitorProps {
   currentRegionData: RegionalPsiData;
@@ -49,7 +53,9 @@ export const LiveHazeMonitor: React.FC<LiveHazeMonitorProps> = ({
   userLocation,
   onSetUserLocation,
 }) => {
+  const { t } = useLanguage();
   const [localSearch, setLocalSearch] = useState<string>('');
+  const [activeBandModal, setActiveBandModal] = useState<typeof PSI_ADVISORY_BANDS[0] | null>(null);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,53 +323,131 @@ export const LiveHazeMonitor: React.FC<LiveHazeMonitorProps> = ({
         </div>
       </section>
 
-      {/* Advisory Rules Table: Clean Visual Cards */}
-      <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+      {/* Advisory Rules Table: 5-7 words per card with Details popup */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
         <div className="mb-6">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            <Shield className="w-4 h-4 text-slate-600" />
+            <Shield className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             <span>Singapore MOH & NEA Official Protocol</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             Air Quality Bands & Recommended Tourist Actions
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Guidelines mapping 24-hr PSI air quality ranges to safe sightseeing practices
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-          {PSI_ADVISORY_BANDS.map((band) => (
-            <div
-              key={band.range}
-              className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/50 hover:bg-white transition-all flex flex-col justify-between space-y-3"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono font-bold text-sm text-slate-900">
-                    {band.range}
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${band.badgeColor}`}>
-                    {band.status}
-                  </span>
-                </div>
-                <div className={`h-1.5 w-full rounded-full ${band.barColor} mb-2.5`} />
-                <p className="text-xs font-medium text-slate-800 leading-snug mb-1">
-                  {band.summary}
-                </p>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  {band.generalTourists}
-                </p>
-              </div>
+          {PSI_ADVISORY_BANDS.map((band) => {
+            const BAND_SHORT_SUMMARIES: Record<string, string> = {
+              '0 – 50': 'Normal outdoor sightseeing permitted for all.', // 6 words
+              '51 – 100': 'Acceptable air quality for normal activities.', // 6 words
+              '101 – 200': 'Reduce prolonged heavy outdoor physical exertion.', // 6 words
+              '201 – 300': 'Avoid prolonged outdoor exposure immediately now.', // 6 words
+              '301+': 'Stay strictly indoors with HEPA filters.', // 6 words
+            };
+            const shortText = BAND_SHORT_SUMMARIES[band.range] || 'Follow official MOH health advisory.';
 
-              <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-600">
-                <span className="font-semibold text-slate-800 block">Sensitive Groups:</span>
-                <span>{band.vulnerableTourists}</span>
+            return (
+              <div
+                key={band.range}
+                onClick={() => setActiveBandModal(band)}
+                className="p-4 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all flex flex-col justify-between space-y-3 cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono font-bold text-sm text-slate-900 dark:text-white">
+                      {band.range}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${band.badgeColor}`}>
+                      {band.status}
+                    </span>
+                  </div>
+                  <div className={`h-1.5 w-full rounded-full ${band.barColor} mb-2.5`} />
+
+                  {/* 5-7 words information */}
+                  <div className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                    {shortText}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveBandModal(band);
+                  }}
+                  className="w-full py-1.5 px-2 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-bold text-[11px] flex items-center justify-center gap-1 shadow-xs transition-all"
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>{t('details')}</span>
+                </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
+
+      {/* Pop-up Modal for Advisory Band Details */}
+      {activeBandModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-y-auto">
+            <button
+              onClick={() => setActiveBandModal(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${activeBandModal.badgeColor}`}>
+                  {activeBandModal.status}
+                </span>
+                <span className="font-mono font-bold text-base text-slate-900 dark:text-white">
+                  PSI Range: {activeBandModal.range}
+                </span>
+              </div>
+
+              <div className={`h-2 w-full rounded-full ${activeBandModal.barColor}`} />
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                <span className="font-bold text-slate-900 dark:text-white block mb-1">General Sightseeing Advisory:</span>
+                {activeBandModal.generalTourists}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 space-y-1">
+                <span className="font-bold block">Sensitive & Vulnerable Groups (Children, Elderly, Asthma):</span>
+                <p className="leading-relaxed text-[11px]">{activeBandModal.vulnerableTourists}</p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    setActiveBandModal(null);
+                    onNavigateToItinerary();
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>View Indoor Substitutions</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveBandModal(null);
+                    onNavigateToSupplies();
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs hover:bg-slate-200 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>Find N95 Masks</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

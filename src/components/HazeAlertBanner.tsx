@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Compass, ShoppingBag, X } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HazeAlertBannerProps {
   psi: number;
@@ -14,6 +15,7 @@ export const HazeAlertBanner: React.FC<HazeAlertBannerProps> = ({
   onNavigateToItinerary,
   onNavigateToSupplies,
 }) => {
+  const { t } = useLanguage();
   const [dismissed, setDismissed] = React.useState(false);
 
   // Only show when PSI exceeds 100 (Unhealthy or higher)
@@ -27,7 +29,7 @@ export const HazeAlertBanner: React.FC<HazeAlertBannerProps> = ({
             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
           </div>
           <div>
-            <span className="font-bold">Air Advisory Notice (PSI {psi} - {status}): </span>
+            <span className="font-bold">{t('airAdvisoryAlert')} (PSI {psi} - {status}): </span>
             <span className="hidden md:inline">
               Smoke particulate levels are elevated. Reduce prolonged outdoor walking.
             </span>
@@ -40,14 +42,14 @@ export const HazeAlertBanner: React.FC<HazeAlertBannerProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 text-white font-medium hover:bg-slate-800 transition-colors"
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>Switch to Indoor Plan</span>
+            <span>{t('switchToIndoorPlan')}</span>
           </button>
           <button
             onClick={onNavigateToSupplies}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-slate-950 font-medium border border-amber-600 transition-colors"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            <span>Find N95 Masks</span>
+            <span>{t('findN95Masks')}</span>
           </button>
           <button
             onClick={() => setDismissed(true)}

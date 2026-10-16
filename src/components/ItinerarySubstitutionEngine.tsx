@@ -15,8 +15,18 @@ import {
 } from 'lucide-react';
 import { ITINERARY_SUBSTITUTIONS } from '../data/hazeData';
 import { ItinerarySubstitution } from '../types/haze';
+import { useLanguage } from '../context/LanguageContext';
 
-export const ItinerarySubstitutionEngine: React.FC = () => {
+interface ItinerarySubstitutionEngineProps {
+  currentPsi?: number;
+  status?: string;
+}
+
+export const ItinerarySubstitutionEngine: React.FC<ItinerarySubstitutionEngineProps> = ({
+  currentPsi = 72,
+  status = 'Moderate',
+}) => {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeModalItem, setActiveModalItem] = useState<ItinerarySubstitution | null>(null);
@@ -27,16 +37,27 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
 
   const categories = [
     'All',
-    'Botanical Dome',
+    'Attractions & Domes',
+    'Indoor Eateries',
+    'Entertainment Joints',
+    'Clinics & Pharmacies',
     'Museum & Culture',
-    'Mega Entertainment',
     'Shopping & Dining',
-    'Family & Kids',
   ];
 
   const filteredItems = ITINERARY_SUBSTITUTIONS.filter((item) => {
-    const matchesCategory =
-      selectedCategory === 'All' || item.alternativeCategory === selectedCategory;
+    let matchesCategory = false;
+    if (selectedCategory === 'All') {
+      matchesCategory = true;
+    } else if (selectedCategory === 'Attractions & Domes') {
+      matchesCategory =
+        item.alternativeCategory === 'Botanical Dome' ||
+        item.alternativeCategory === 'Attractions & Domes' ||
+        item.alternativeCategory === 'Family & Kids';
+    } else {
+      matchesCategory = item.alternativeCategory === selectedCategory;
+    }
+
     const matchesSearch =
       searchQuery === '' ||
       item.outdoorAttraction.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,29 +75,70 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
     );
   };
 
+  const getAdvisoryMapping = (psi: number) => {
+    if (psi <= 50) {
+      return {
+        band: 'Good (PSI 0–50)',
+        color: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+        advice: 'Air quality is pristine. Normal outdoor activities can be enjoyed; visit indoor bio-domes for climate cooling and lush flora.',
+      };
+    }
+    if (psi <= 100) {
+      return {
+        band: 'Moderate (PSI 51–100)',
+        color: 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
+        advice: 'Air quality is acceptable. Normal sight-seeing permitted; consider substituting strenuous outdoor walks with air-conditioned indoor eateries and attractions during peak haze hours.',
+      };
+    }
+    if (psi <= 200) {
+      return {
+        band: 'Unhealthy (PSI 101–200)',
+        color: 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700',
+        advice: 'Elevated transboundary smoke haze. Healthy individuals should reduce prolonged outdoor walking. Priority recommendations: Switch to HEPA-filtered bio-domes, sheltered food halls, and subterranean retail corridors.',
+      };
+    }
+    return {
+      band: 'Very Unhealthy / Hazardous (PSI 201+)',
+      color: 'bg-rose-50 text-rose-800 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700',
+      advice: 'Urgent air quality alert. Avoid all outdoor exposure. Stay strictly in fully enclosed, hospital-grade filtered biodomes or underground transit tunnels; keep certified N95 masks equipped.',
+    };
+  };
+
+  const advisory = getAdvisoryMapping(currentPsi);
+
+  const SHORT_SUMMARIES: Record<string, string> = {
+    'gardens-outdoors-to-domes': 'Cooled glass biodomes with indoor waterfall.', // 6 words
+    'sentosa-beach-to-aquarium': 'Underwater marine tunnels with filtered air.', // 6 words
+    'marina-barrage-to-jewel': 'Sheltered indoor rainforest with rain vortex.', // 6 words
+    'merlion-to-artscience': 'Immersive digital art galleries fully air-conditioned.', // 6 words
+    'civic-district-to-national-gallery': 'Sheltered heritage museum with curated dining.', // 6 words
+    'orchard-walk-to-subterranean': 'Subterranean air-conditioned shopping and transit corridors.', // 6 words
+    'jurong-bird-to-science-centre': 'Interactive science galleries and indoor planetarium.', // 6 words
+  };
+
   return (
     <div className="space-y-8">
       {/* Visual Header */}
-      <section className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-sm">
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-              <span className="font-semibold text-slate-900">Value Proposition 3</span>
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+              <span className="font-semibold text-slate-900 dark:text-white">Non-Haze Activities</span>
               <span aria-hidden="true">·</span>
-              <span>Smart Itinerary Substitution</span>
+              <span>Indoor Activity & Venue Finder</span>
               <span aria-hidden="true">·</span>
-              <span>100% Air-Conditioned</span>
+              <span>100% Sheltered</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
-              Swap Outdoor Heat for World-Class Indoor Wonders
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
+              Swap Outdoor Heat & Haze for World-Class Indoor Wonders
             </h1>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Don’t let smoke haze ruin your vacation. Singapore’s world-renowned indoor bio-domes, underground shopping corridors, and museum complexes feature hospital-grade HEPA filtration and cool 23°C climates.
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+              Discover safe indoor activities, attractions, sheltered eateries, entertainment joints, and nearest 24/7 pharmacies mapped directly to real-time PSI conditions.
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="p-4 rounded-2xl bg-slate-900 text-white text-center shadow-md">
+            <div className="p-4 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white text-center shadow-md border border-slate-800">
               <span className="text-2xl font-black font-mono tabular-nums block">
                 {savedPlanIds.length}
               </span>
@@ -85,8 +147,21 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
           </div>
         </div>
 
+        {/* Dynamic PSI Advisory Mapping Strip */}
+        <div className={`mt-6 p-4 rounded-2xl border ${advisory.color} transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}>
+          <div>
+            <span className="font-bold block text-sm mb-0.5">
+              Mapped to Current Advisory Band: {advisory.band}
+            </span>
+            <p className="leading-relaxed opacity-90">{advisory.advice}</p>
+          </div>
+          <span className="font-mono font-bold px-2.5 py-1 rounded-lg bg-white/60 dark:bg-black/30 border border-current shrink-0">
+            Active PSI: {currentPsi}
+          </span>
+        </div>
+
         {/* Filter Controls & Search */}
-        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -94,7 +169,7 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
               placeholder="Search outdoor attraction or indoor sanctuary..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-sky-500 text-slate-900 dark:text-white transition-all"
             />
           </div>
 
@@ -106,7 +181,7 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
                 className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all ${
                   selectedCategory === cat
                     ? 'bg-slate-900 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200'
                 }`}
               >
                 {cat}
@@ -120,16 +195,17 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item) => {
           const isSaved = savedPlanIds.includes(item.id);
+          const shortSummary = SHORT_SUMMARIES[item.id] || 'Cooled indoor sanctuary with clean air.';
 
           return (
             <div
               key={item.id}
               onClick={() => setActiveModalItem(item)}
-              className="group bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between"
+              className="group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between"
             >
               <div>
                 {/* Visual Card Image Banner with Badges */}
-                <div className="relative h-56 w-full overflow-hidden bg-slate-100">
+                <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
                     src={item.imageUrl}
                     alt={item.indoorAlternative}
@@ -141,11 +217,11 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
                   {/* Bookmark Button */}
                   <button
                     onClick={(e) => toggleSavePlan(item.id, e)}
-                    className="absolute top-3 right-3 w-9 h-9 rounded-full bg-slate-900/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-slate-900 transition-colors shadow-md z-10"
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-900/60 backdrop-blur-md text-white flex items-center justify-center hover:bg-slate-900 transition-colors shadow-md z-10"
                     title={isSaved ? 'Remove from plan' : 'Save to plan'}
                   >
                     <Bookmark
-                      className={`w-4 h-4 ${isSaved ? 'fill-amber-400 text-amber-400' : 'text-white'}`}
+                      className={`w-3.5 h-3.5 ${isSaved ? 'fill-amber-400 text-amber-400' : 'text-white'}`}
                     />
                   </button>
 
@@ -157,47 +233,48 @@ export const ItinerarySubstitutionEngine: React.FC = () => {
 
                   {/* Overlay Title */}
                   <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <div className="text-[11px] text-slate-300 mb-0.5">
+                    <div className="text-[10px] text-slate-300 mb-0.5">
                       {item.alternativeCategory} · {item.admission}
                     </div>
-                    <h3 className="font-extrabold text-lg text-white leading-snug drop-shadow-sm">
+                    <h3 className="font-extrabold text-base text-white leading-snug drop-shadow-sm">
                       {item.indoorAlternative}
                     </h3>
                   </div>
                 </div>
 
-                {/* Card Body: The Outdoor Swap Pill */}
-                <div className="p-5 space-y-3">
-                  <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-100 text-xs">
-                    <span className="text-[10px] uppercase font-bold text-rose-700 block mb-0.5">
-                      Avoid Outdoor Exposure:
-                    </span>
-                    <span className="line-through text-slate-500 block text-[11px]">
-                      {item.outdoorAttraction}
-                    </span>
-                    <span className="text-slate-700 font-medium block text-xs mt-1">
-                      {item.highlight}
-                    </span>
+                {/* Card Body: 5 to 7 words only as requested */}
+                <div className="p-4 space-y-3">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <Train className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{item.nearestMrt.split('-')[0].trim()}</span>
                   </div>
 
-                  {/* MRT Linkway */}
-                  <div className="flex items-center gap-2 text-xs text-slate-600 pt-1">
-                    <Train className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span className="truncate">{item.nearestMrt}</span>
+                  {/* 5-7 Words Simplified Information */}
+                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                      {t('summary')}
+                    </span>
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                      {shortSummary}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Card Footer */}
-              <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/50">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{item.suggestedDuration}</span>
-                </span>
-                <span className="font-bold text-slate-900 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  <span>View Route</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
+              {/* Card Footer: Prominent Details Button */}
+              <div className="p-4 pt-0">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveModalItem(item);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>{t('details')}</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
               </div>
             </div>
           );

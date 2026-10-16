@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Wind,
   CloudFog,
@@ -9,26 +9,38 @@ import {
   Layers,
   HelpCircle,
   ExternalLink,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { HAZE_EDUCATIONAL_GUIDE, IMAGES } from '../data/hazeData';
+import { useLanguage } from '../context/LanguageContext';
 
 export const HazeEducationGuide: React.FC = () => {
+  const { t } = useLanguage();
+  const [activeMetricModal, setActiveMetricModal] = useState<{
+    title: string;
+    badge: string;
+    scale: string;
+    desc: string;
+    bestUsedFor: string;
+  } | null>(null);
+
   return (
     <div className="space-y-8">
       {/* Educational Header */}
-      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-sm transition-colors">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-            <span>Value Proposition 1</span>
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+            <span>Non-Haze Activities</span>
             <span aria-hidden="true">·</span>
             <span>Educational Guide & Science</span>
             <span aria-hidden="true">·</span>
             <span>NEA haze.gov.sg Standards</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mb-2">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-3">
             What is the Haze? Understanding the Singapore Phenomenon
           </h1>
-          <p className="text-slate-600 text-sm leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
             For many international tourists visiting Southeast Asia, encountering the seasonal smoke haze is unexpected. Here is everything you need to know about where it originates, why it smells like burnt wood, and how Singapore monitors it.
           </p>
         </div>
@@ -37,16 +49,16 @@ export const HazeEducationGuide: React.FC = () => {
       {/* Origin & Science Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Origin & Peatland Fires */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
-            <CloudFog className="w-5 h-5 text-slate-700 shrink-0" />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-base">
+            <CloudFog className="w-5 h-5 text-slate-700 dark:text-slate-300 shrink-0" />
             <span>Where Does the Smoke Come From?</span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             {HAZE_EDUCATIONAL_GUIDE.whatIsIt}
           </p>
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
-            <span className="font-semibold text-slate-900 block mb-1">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <span className="font-semibold text-slate-900 dark:text-white block mb-1">
               Why Does it Smell Like Campfire?
             </span>
             {HAZE_EDUCATIONAL_GUIDE.whySmell}
@@ -54,22 +66,22 @@ export const HazeEducationGuide: React.FC = () => {
         </div>
 
         {/* Monsoon Wind Patterns */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
-            <Wind className="w-5 h-5 text-slate-700 shrink-0" />
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-base">
+            <Wind className="w-5 h-5 text-slate-700 dark:text-slate-300 shrink-0" />
             <span>Seasonal Wind & Monsoon Cycles</span>
           </div>
-          <div className="space-y-3 text-xs text-slate-600">
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
-              <span className="font-semibold text-slate-900 block">
+          <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+            <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-1">
+              <span className="font-semibold text-slate-900 dark:text-white block">
                 Southwest Monsoon Season (June – October)
               </span>
               <p>
                 The primary haze risk window. Dry conditions in Sumatra and Kalimantan combine with south-westerly winds blowing smoke north-east across Singapore and the Malacca Strait.
               </p>
             </div>
-            <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
-              <span className="font-semibold text-slate-900 block">
+            <div className="p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 space-y-1">
+              <span className="font-semibold text-slate-900 dark:text-white block">
                 Northeast Monsoon & Inter-Monsoon (November – May)
               </span>
               <p>
@@ -80,53 +92,171 @@ export const HazeEducationGuide: React.FC = () => {
         </div>
       </section>
 
-      {/* Decoding the Metrics: 24-hr PSI vs 1-hr PM2.5 */}
-      <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+      {/* Decoding the Metrics: 24-hr PSI vs 1-hr PM2.5 with 5-7 words cards and details */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-sm">
         <div className="max-w-2xl mb-6">
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             Decoding Singapore Air Metrics: 24-Hour PSI vs 1-Hour PM2.5
           </h2>
-          <p className="text-xs text-slate-600 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Singapore reports two distinct numbers. Knowing the difference helps you plan your day with confidence:
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Overall Daily Indicator
-              </span>
-              <span className="font-mono text-xs font-semibold text-slate-900">0 – 500+ scale</span>
+          {/* Card 1: 24-Hour PSI */}
+          <div
+            onClick={() =>
+              setActiveMetricModal({
+                title: '24-Hour PSI (Pollutant Standards Index)',
+                badge: 'Overall Daily Indicator',
+                scale: '0 – 500+ scale',
+                desc: HAZE_EDUCATIONAL_GUIDE.psiVsPm25.psi,
+                bestUsedFor:
+                  'Understanding overall cumulative daily exposure and determining whether schools or outdoor events need adjustment.',
+              })
+            }
+            className="p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-md"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Overall Daily Indicator
+                </span>
+                <span className="font-mono text-xs font-semibold text-slate-900 dark:text-white">0 – 500+ scale</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                24-Hour PSI (Pollutant Standards Index)
+              </h3>
+              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  {t('summary')}
+                </span>
+                <p className="font-semibold leading-snug">
+                  Rolling daily index reflecting overall cumulative air exposure.
+                </p>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-slate-900">24-Hour PSI (Pollutant Standards Index)</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {HAZE_EDUCATIONAL_GUIDE.psiVsPm25.psi}
-            </p>
-            <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-200">
-              <span className="font-medium text-slate-700">Best used for: </span>
-              Understanding overall cumulative daily exposure and determining whether schools or outdoor events need adjustment.
-            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMetricModal({
+                  title: '24-Hour PSI (Pollutant Standards Index)',
+                  badge: 'Overall Daily Indicator',
+                  scale: '0 – 500+ scale',
+                  desc: HAZE_EDUCATIONAL_GUIDE.psiVsPm25.psi,
+                  bestUsedFor:
+                    'Understanding overall cumulative daily exposure and determining whether schools or outdoor events need adjustment.',
+                });
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>{t('details')}</span>
+            </button>
           </div>
 
-          <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Instant Tourist Compass
-              </span>
-              <span className="font-mono text-xs font-semibold text-slate-900">µg/m³ concentration</span>
+          {/* Card 2: 1-Hour PM2.5 */}
+          <div
+            onClick={() =>
+              setActiveMetricModal({
+                title: '1-Hour PM2.5 (Immediate Particles)',
+                badge: 'Instant Tourist Compass',
+                scale: 'µg/m³ concentration',
+                desc: HAZE_EDUCATIONAL_GUIDE.psiVsPm25.pm25,
+                bestUsedFor:
+                  'Deciding whether to take a walk around Marina Bay right this hour, or immediately head inside Jewel Changi or the National Gallery.',
+              })
+            }
+            className="p-6 rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 transition-all flex flex-col justify-between space-y-4 cursor-pointer hover:shadow-md"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Instant Tourist Compass
+                </span>
+                <span className="font-mono text-xs font-semibold text-slate-900 dark:text-white">µg/m³ concentration</span>
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                1-Hour PM2.5 (Immediate Particles)
+              </h3>
+              <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  {t('summary')}
+                </span>
+                <p className="font-semibold leading-snug">
+                  Real-time particulate concentration for immediate outdoor decisions.
+                </p>
+              </div>
             </div>
-            <h3 className="text-base font-bold text-slate-900">1-Hour PM2.5 (Immediate Particles)</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {HAZE_EDUCATIONAL_GUIDE.psiVsPm25.pm25}
-            </p>
-            <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-200">
-              <span className="font-medium text-slate-700">Best used for: </span>
-              Deciding whether to take a walk around Marina Bay right this hour, or immediately head inside Jewel Changi or the National Gallery.
-            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMetricModal({
+                  title: '1-Hour PM2.5 (Immediate Particles)',
+                  badge: 'Instant Tourist Compass',
+                  scale: 'µg/m³ concentration',
+                  desc: HAZE_EDUCATIONAL_GUIDE.psiVsPm25.pm25,
+                  bestUsedFor:
+                    'Deciding whether to take a walk around Marina Bay right this hour, or immediately head inside Jewel Changi or the National Gallery.',
+                });
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>{t('details')}</span>
+            </button>
           </div>
         </div>
       </section>
+
+      {/* Pop-up Modal for Metric Details */}
+      {activeMetricModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative">
+            <button
+              onClick={() => setActiveMetricModal(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                    {activeMetricModal.badge}
+                  </span>
+                  <span className="font-mono text-xs text-slate-400">· {activeMetricModal.scale}</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  {activeMetricModal.title}
+                </h3>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed">
+                {activeMetricModal.desc}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 text-xs text-sky-950 dark:text-sky-200 space-y-1">
+                <span className="font-bold block">When Tourists Should Check This:</span>
+                <p className="leading-relaxed text-[11px]">{activeMetricModal.bestUsedFor}</p>
+              </div>
+
+              <button
+                onClick={() => setActiveMetricModal(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
+              >
+                <span>{t('close')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Why Singapore is Still a Fantastic Holiday Destination During Haze */}
       <section className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-xs">

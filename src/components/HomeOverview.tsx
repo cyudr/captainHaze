@@ -14,11 +14,14 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
+  X,
+  ExternalLink,
 } from 'lucide-react';
 import { RegionalPsiData, SingaporeRegion } from '../types/haze';
 import { IMAGES, ITINERARY_SUBSTITUTIONS } from '../data/hazeData';
 import { SingaporeRegionalMap } from './SingaporeRegionalMap';
 import { resolveSingaporeLocation, resolveCoordinatesToRegion, LocationMatchResult } from '../utils/locationResolver';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HomeOverviewProps {
   currentRegionData: RegionalPsiData;
@@ -39,8 +42,10 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
   userLocation,
   onSetUserLocation,
 }) => {
+  const { t } = useLanguage();
   const [searchInput, setSearchInput] = useState<string>('');
   const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [activePillarModal, setActivePillarModal] = useState<'pillar1' | 'pillar2' | 'pillar3' | 'pillar4' | null>(null);
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -117,28 +122,25 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
         <div className="relative z-10 p-6 sm:p-10 lg:p-12 max-w-4xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs text-slate-200 mb-4">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Captain Haze · Official Tourist Haze Companion</span>
+            <span>{t('appName')} · {t('appTagline')}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
-            Explore Singapore Confidently, <br className="hidden sm:inline" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-200 via-white to-amber-200">
-              Whatever the Air Quality.
-            </span>
+            {t('heroTitle')}
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mb-8">
-            Key in your hotel or destination to find your exact NEA haze zone, receive real-time PSI alerts, and instantly substitute outdoor walking with world-class air-conditioned sanctuaries.
+            {t('heroSubtitle')}
           </p>
 
-          {/* Location Search Bar (Requirement 2: Key in specific locations) */}
+          {/* Location Search Bar */}
           <div className="bg-white/10 backdrop-blur-md p-2 sm:p-3 rounded-2xl border border-white/20 shadow-lg max-w-2xl">
             <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                 <input
                   type="text"
-                  placeholder="Enter your hotel, landmark (e.g. Marina Bay Sands, Sentosa, 018956)..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 text-xs sm:text-sm rounded-xl bg-slate-900/80 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white"
@@ -154,21 +156,21 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
                   title="Detect GPS Location"
                 >
                   <Navigation className={`w-3.5 h-3.5 ${isLocating ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">GPS</span>
+                  <span className="hidden sm:inline">{t('detectGps')}</span>
                 </button>
 
                 <button
                   type="submit"
                   className="px-5 py-3 rounded-xl bg-white text-slate-950 text-xs sm:text-sm font-bold hover:bg-slate-100 transition-all shadow-md shrink-0"
                 >
-                  Find My Zone
+                  {t('findMyZone')}
                 </button>
               </div>
             </form>
 
             {/* Quick Popular Presets */}
             <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-[11px] text-slate-300 font-medium mr-1">Popular spots:</span>
+              <span className="text-[11px] text-slate-300 font-medium mr-1">{t('popularSpots')}</span>
               {quickPresets.map((preset) => (
                 <button
                   key={preset.label}
@@ -191,11 +193,11 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">Location Matched:</span>
+                    <span className="text-xs text-slate-400">{t('locationMatched')}</span>
                     <strong className="text-white text-sm">{userLocation.matchedName}</strong>
                   </div>
                   <div className="text-xs text-sky-300 font-semibold mt-0.5">
-                    Assigned to {userLocation.region.toUpperCase()} Zone · 24-hr PSI: {allRegionsData[userLocation.region]?.psi24Hourly ?? '--'} ({allRegionsData[userLocation.region]?.status ?? 'Mod'})
+                    {t('assignedTo')} {userLocation.region.toUpperCase()} Zone · 24-hr PSI: {allRegionsData[userLocation.region]?.psi24Hourly ?? '--'} ({allRegionsData[userLocation.region]?.status ?? 'Mod'})
                   </div>
                 </div>
               </div>
@@ -204,32 +206,32 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
                 onClick={() => onNavigateToTab('live')}
                 className="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white font-semibold transition-colors shrink-0"
               >
-                View Full Reading
+                {t('viewFullReading')}
               </button>
             </div>
           )}
         </div>
       </section>
 
-      {/* 2. Visual Regional Map & Air Status Dashboard (Requirement 3: Accurate Map) */}
-      <section className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200/90 shadow-sm space-y-6">
+      {/* 2. Visual Regional Map & Air Status Dashboard */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-6 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-              <span>National Environment Agency Feed</span>
+              <span>{t('liveNeaFeed')}</span>
               <span aria-hidden="true">·</span>
               <span>data.gov.sg Real-Time</span>
             </div>
-            <h2 className="text-2xl font-black text-slate-900">
-              Singapore Live Air Quality by Geographic Sector
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+              {t('airQualityBySector')}
             </h2>
           </div>
 
           <button
             onClick={() => onNavigateToTab('live')}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-sky-400 hover:text-slate-700 transition-colors"
           >
-            <span>Open Advanced Live Monitor</span>
+            <span>{t('viewFullReading')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -244,192 +246,303 @@ export const HomeOverview: React.FC<HomeOverviewProps> = ({
         />
       </section>
 
-      {/* 3. Four Core Highlight Pillars (Highlighting Each Tab) */}
+      {/* 3. Four Core Highlight Pillars (Simplified to 5-7 words per card face with Details popup) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Pillar 1: Itinerary Substitution Highlight */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-6 group">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+        {/* Pillar 1: Itinerary Substitution */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 transition-colors">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                 <Compass className="w-4 h-4" />
                 <span>Pillar 1 · Holiday Contingency</span>
               </span>
               <span className="text-[11px] font-semibold text-slate-400">100% Sheltered</span>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              Swap Outdoor Plans for Filtered Indoor Sanctuaries
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {t('pillar1Title')}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-              If haze spikes outside, switch to Singapore’s world-class cooled biodomes and subterranean trails with underground MRT connectivity.
-            </p>
 
-            {/* Quick Mini Cards */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video relative">
-                <img
-                  src={IMAGES.cloudForest}
-                  alt="Cloud Forest Dome"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
-                  <span className="text-[10px] font-bold text-white leading-tight">Cloud Forest</span>
-                </div>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video relative">
-                <img
-                  src={IMAGES.jewel}
-                  alt="Jewel Changi"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
-                  <span className="text-[10px] font-bold text-white leading-tight">Jewel Changi</span>
-                </div>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video relative">
-                <img
-                  src={IMAGES.aquarium}
-                  alt="SEA Aquarium"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
-                  <span className="text-[10px] font-bold text-white leading-tight">S.E.A. Aquarium</span>
-                </div>
-              </div>
+            {/* 5-7 Words Information */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {t('summary')}
+              </span>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                {t('pillar1Short')}
+              </p>
             </div>
           </div>
 
           <button
-            onClick={() => onNavigateToTab('itinerary')}
-            className="w-full py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            onClick={() => setActivePillarModal('pillar1')}
+            className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
-            <span>Explore All 7 Indoor Substitutions</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{t('details')}</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
           </button>
         </div>
 
         {/* Pillar 2: What to Buy & Pharmacy Highlight */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 transition-colors">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                 <ShoppingBag className="w-4 h-4" />
                 <span>Pillar 2 · Essential Haze Kit</span>
               </span>
               <span className="text-[11px] font-semibold text-slate-400">Official Stockists</span>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              Certified N95 Respirators & 24/7 Pharmacies
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {t('pillar2Title')}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-              Learn why ordinary blue surgical masks fail against fine PM2.5 smoke and locate 24-hour pharmacies (Guardian Changi Airport & Mustafa Centre).
-            </p>
 
-            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 space-y-1">
-              <span className="font-bold block">Tourist Protection Checklist:</span>
-              <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
-                <span className="bg-white px-2 py-0.5 rounded border border-amber-200">
-                  3M Aura N95 Mask
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded border border-amber-200">
-                  Preservative-Free Tears
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded border border-amber-200">
-                  Sterile Saline Spray
-                </span>
-              </div>
+            {/* 5-7 Words Information */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {t('summary')}
+              </span>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                {t('pillar2Short')}
+              </p>
             </div>
           </div>
 
           <button
-            onClick={() => onNavigateToTab('supplies')}
-            className="w-full py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            onClick={() => setActivePillarModal('pillar2')}
+            className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
-            <span>View Mask Buying Guide & Outlets</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{t('details')}</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
           </button>
         </div>
 
         {/* Pillar 3: Medical & SOS Help Highlight */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1.5">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 transition-colors">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
                 <Stethoscope className="w-4 h-4" />
                 <span>Pillar 3 · Health & Clinics</span>
               </span>
-              <span className="text-[11px] font-bold text-rose-600">SCDF Emergency 995</span>
+              <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">SCDF 995</span>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              Symptom Triage & 24-Hour Emergency Hospitals
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {t('pillar3Title')}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-              Instant clinical self-check for dry coughing, eye stinging, or breathlessness. Direct links to SGH, KKH pediatric emergency, and hotel room telemedicine.
-            </p>
 
-            <div className="flex items-center gap-3">
-              <a
-                href="tel:995"
-                className="flex-1 py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-center flex items-center justify-center gap-1.5"
-              >
-                <PhoneCall className="w-3.5 h-3.5 text-rose-600" />
-                <span>Ambulance 995</span>
-              </a>
-              <a
-                href="tel:1777"
-                className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs text-center"
-              >
-                Non-Emergency 1777
-              </a>
+            {/* 5-7 Words Information */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {t('summary')}
+              </span>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                {t('pillar3Short')}
+              </p>
             </div>
           </div>
 
           <button
-            onClick={() => onNavigateToTab('health')}
-            className="w-full py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            onClick={() => setActivePillarModal('pillar3')}
+            className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
-            <span>Open Medical Directory & Triage</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{t('details')}</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
           </button>
         </div>
 
         {/* Pillar 4: Science & Haze 101 Highlight */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-6">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-600 flex items-center gap-1.5">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4 transition-colors">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4" />
                 <span>Pillar 4 · What is Haze?</span>
               </span>
               <span className="text-[11px] font-semibold text-slate-400">NEA Standards</span>
             </div>
 
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
-              Understanding the Southeast Asian Smoke Haze
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Understanding Southeast Asian Smoke Haze
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
-              Learn about regional peatland fires, seasonal monsoon wind patterns (June–October), and the difference between 24-hr PSI and 1-hr PM2.5.
-            </p>
 
-            <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200 text-xs text-sky-950">
-              <span className="font-bold block mb-1">Key Rule of Thumb:</span>
-              <p className="text-[11px] leading-relaxed">
-                Check the <strong>1-hour PM2.5</strong> reading before heading out to Marina Bay. It represents immediate air quality right this hour.
+            {/* 5-7 Words Information */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                {t('summary')}
+              </span>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-snug">
+                {t('pillar4Short')}
               </p>
             </div>
           </div>
 
           <button
-            onClick={() => onNavigateToTab('education')}
-            className="w-full py-3 rounded-2xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            onClick={() => setActivePillarModal('pillar4')}
+            className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
-            <span>Read Complete Educational Guide</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{t('details')}</span>
+            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
           </button>
         </div>
       </div>
+
+      {/* Pop-up Modals for Pillar Details */}
+      {activePillarModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-y-auto">
+            <button
+              onClick={() => setActivePillarModal(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {activePillarModal === 'pillar1' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+                  <Compass className="w-4 h-4" />
+                  <span>Pillar 1 Details · 100% Sheltered Sanctuaries</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  {t('pillar1Title')}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {t('pillar1Desc')}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 aspect-video relative">
+                    <img src={IMAGES.cloudForest} alt="Cloud Forest" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1.5 text-[10px] font-bold text-white drop-shadow">Cloud Forest</span>
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 aspect-video relative">
+                    <img src={IMAGES.jewel} alt="Jewel Changi" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1.5 text-[10px] font-bold text-white drop-shadow">Jewel Changi</span>
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 aspect-video relative">
+                    <img src={IMAGES.aquarium} alt="S.E.A. Aquarium" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1.5 text-[10px] font-bold text-white drop-shadow">S.E.A. Aquarium</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActivePillarModal(null);
+                    onNavigateToTab('itinerary');
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 flex items-center justify-center gap-2"
+                >
+                  <span>{t('exploreSubstitutions')}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {activePillarModal === 'pillar2' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-wider">
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Pillar 2 Details · Certified Protection & Outlets</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  {t('pillar2Title')}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {t('pillar2Desc')}
+                </p>
+                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-950 dark:text-amber-200 space-y-1">
+                  <span className="font-bold block">Tourist Recommended Kit:</span>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200">3M Aura N95 Mask</span>
+                    <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200">Preservative-Free Tears</span>
+                    <span className="bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200">Sterile Saline Spray</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActivePillarModal(null);
+                    onNavigateToTab('supplies');
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 flex items-center justify-center gap-2"
+                >
+                  <span>{t('viewSupplies')}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {activePillarModal === 'pillar3' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-rose-600 font-bold text-xs uppercase tracking-wider">
+                  <Stethoscope className="w-4 h-4" />
+                  <span>Pillar 3 Details · Emergency Services & Clinics</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  {t('pillar3Title')}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {t('pillar3Desc')}
+                </p>
+                <div className="flex items-center gap-3">
+                  <a
+                    href="tel:995"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs text-center flex items-center justify-center gap-1.5"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5 text-rose-600" />
+                    <span>{t('ambulanceCall')}</span>
+                  </a>
+                  <a
+                    href="tel:1777"
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs text-center"
+                  >
+                    {t('nonEmergencyCall')}
+                  </a>
+                </div>
+                <button
+                  onClick={() => {
+                    setActivePillarModal(null);
+                    onNavigateToTab('health');
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 flex items-center justify-center gap-2"
+                >
+                  <span>{t('viewClinics')}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {activePillarModal === 'pillar4' && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 text-sky-600 font-bold text-xs uppercase tracking-wider">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Pillar 4 Details · The Science of Smoke Haze</span>
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  Understanding Southeast Asian Smoke Haze
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Learn about peatland fires, seasonal monsoon wind patterns, and why 1-hour PM2.5 readings provide immediate guidance on outdoor walking safety.
+                </p>
+                <button
+                  onClick={() => {
+                    setActivePillarModal(null);
+                    onNavigateToTab('education');
+                  }}
+                  className="w-full py-3 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 flex items-center justify-center gap-2"
+                >
+                  <span>Read Complete Educational Guide</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

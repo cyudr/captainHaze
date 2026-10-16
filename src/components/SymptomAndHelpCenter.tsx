@@ -10,17 +10,25 @@ import {
   Shield,
   Activity,
   UserCheck,
+  X,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 import {
   SYMPTOM_TRIAGE_DATA,
   AGE_GROUP_GUIDELINES,
   HEALTHCARE_FACILITIES,
 } from '../data/hazeData';
+import { useLanguage } from '../context/LanguageContext';
+import { ClinicOrHospital } from '../types/haze';
 
 export const SymptomAndHelpCenter: React.FC = () => {
+  const { t } = useLanguage();
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [selectedCohortIndex, setSelectedCohortIndex] = useState<number>(0);
   const [facilityFilter, setFacilityFilter] = useState<string>('All');
+  const [activeFacilityModal, setActiveFacilityModal] = useState<ClinicOrHospital | null>(null);
+  const [activeCohortModal, setActiveCohortModal] = useState<typeof AGE_GROUP_GUIDELINES[0] | null>(null);
 
   const symptomChecklist = [
     { id: 'itchy-eyes', label: 'Itchy, stinging or watery eyes', zone: 'Eyes / Face', severity: 'mild' },
@@ -244,42 +252,186 @@ export const SymptomAndHelpCenter: React.FC = () => {
           ))}
         </div>
 
-        {/* Selected Cohort Card */}
+        {/* Selected Cohort Card with 5-7 words and Details Pop-up */}
         {(() => {
           const currentCohort = AGE_GROUP_GUIDELINES[selectedCohortIndex];
           return (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl border border-emerald-200 bg-emerald-50/40 text-xs space-y-2">
-                  <span className="font-extrabold text-emerald-900 block">PSI 0 – 100 (Normal)</span>
-                  <p className="text-slate-700 leading-relaxed">{currentCohort.psiUnder100}</p>
+                {/* Normal */}
+                <div
+                  onClick={() => setActiveCohortModal(currentCohort)}
+                  className="p-5 rounded-3xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs flex flex-col justify-between space-y-3 cursor-pointer hover:shadow-md transition-all"
+                >
+                  <div>
+                    <span className="font-extrabold text-emerald-900 dark:text-emerald-300 block mb-1">
+                      PSI 0 – 100 (Normal)
+                    </span>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900 text-slate-700 dark:text-slate-200">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                        {t('summary')}
+                      </span>
+                      <p className="font-semibold leading-snug">
+                        Normal outdoor activities permitted without restrictions.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCohortModal(currentCohort);
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{t('details')}</span>
+                  </button>
                 </div>
-                <div className="p-5 rounded-2xl border border-amber-200 bg-amber-50/40 text-xs space-y-2">
-                  <span className="font-extrabold text-amber-900 block">PSI 101 – 200 (Unhealthy)</span>
-                  <p className="text-slate-700 leading-relaxed">{currentCohort.psi101To200}</p>
-                </div>
-                <div className="p-5 rounded-2xl border border-rose-200 bg-rose-50/40 text-xs space-y-2">
-                  <span className="font-extrabold text-rose-900 block">PSI 201+ (Hazardous)</span>
-                  <p className="text-slate-700 leading-relaxed">{currentCohort.psi201Plus}</p>
-                </div>
-              </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <span className="text-xs font-bold text-slate-900 block mb-2">
-                  Key Precautions for {currentCohort.group}:
-                </span>
-                <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
-                  {currentCohort.keyPrecautions.map((prec, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{prec}</span>
-                    </li>
-                  ))}
-                </ul>
+                {/* Unhealthy */}
+                <div
+                  onClick={() => setActiveCohortModal(currentCohort)}
+                  className="p-5 rounded-3xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 text-xs flex flex-col justify-between space-y-3 cursor-pointer hover:shadow-md transition-all"
+                >
+                  <div>
+                    <span className="font-extrabold text-amber-900 dark:text-amber-300 block mb-1">
+                      PSI 101 – 200 (Unhealthy)
+                    </span>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-amber-100 dark:border-amber-900 text-slate-700 dark:text-slate-200">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                        {t('summary')}
+                      </span>
+                      <p className="font-semibold leading-snug">
+                        Reduce prolonged or strenuous outdoor physical exertion.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCohortModal(currentCohort);
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{t('details')}</span>
+                  </button>
+                </div>
+
+                {/* Hazardous */}
+                <div
+                  onClick={() => setActiveCohortModal(currentCohort)}
+                  className="p-5 rounded-3xl border border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20 text-xs flex flex-col justify-between space-y-3 cursor-pointer hover:shadow-md transition-all"
+                >
+                  <div>
+                    <span className="font-extrabold text-rose-900 dark:text-rose-300 block mb-1">
+                      PSI 201+ (Hazardous)
+                    </span>
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-900 text-slate-700 dark:text-slate-200">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                        {t('summary')}
+                      </span>
+                      <p className="font-semibold leading-snug">
+                        Avoid non-essential outdoor activities immediately now.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCohortModal(currentCohort);
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-rose-800 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{t('details')}</span>
+                  </button>
+                </div>
               </div>
             </div>
           );
         })()}
+
+        {/* Cohort Details Pop-up Modal */}
+        {activeCohortModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-y-auto">
+              <button
+                onClick={() => setActiveCohortModal(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider block mb-1">
+                    Medical & Vulnerability Profile
+                  </span>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                    {activeCohortModal.group}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {activeCohortModal.subtext}
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                    <span className="font-bold text-emerald-900 dark:text-emerald-300 block mb-0.5">
+                      PSI 0 – 100 (Normal):
+                    </span>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {activeCohortModal.psiUnder100}
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <span className="font-bold text-amber-900 dark:text-amber-300 block mb-0.5">
+                      PSI 101 – 200 (Unhealthy):
+                    </span>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {activeCohortModal.psi101To200}
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800">
+                    <span className="font-bold text-rose-900 dark:text-rose-300 block mb-0.5">
+                      PSI 201+ (Hazardous):
+                    </span>
+                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {activeCohortModal.psi201Plus}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white block mb-2">
+                    Key Health Precautions:
+                  </span>
+                  <ul className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                    {activeCohortModal.keyPrecautions.map((prec, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>{prec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <button
+                  onClick={() => setActiveCohortModal(null)}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-bold text-xs hover:bg-slate-800 transition-colors"
+                >
+                  <span>{t('close')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Hospital & Telemedicine Directory */}
@@ -312,64 +464,128 @@ export const SymptomAndHelpCenter: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredFacilities.map((fac) => (
-            <div
-              key={fac.id}
-              className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-            >
-              <div>
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                  <span className="font-bold text-slate-900 text-xs">{fac.type}</span>
-                  <span>{fac.area}</span>
+          {filteredFacilities.map((fac) => {
+            const FACILITY_SUMMARIES: Record<string, string> = {
+              'sgh-emergency': 'Premier emergency hospital with 24/7 trauma care.',
+              'raffles-hospital-emergency': 'Private international hospital with direct billing.',
+              'mount-elizabeth-orchard': 'Central medical center with 24h emergency room.',
+              'kkh-children-emergency': 'Specialized children and maternal emergency hospital.',
+              'raffles-medical-changi-t3': 'Airport transit clinic open around the clock.',
+              'doctor-anywhere-telehealth': 'Virtual consult with hotel medicine delivery.',
+              'speedoc-house-call': 'Doctor hotel room house call service.',
+            };
+            const shortSummary = FACILITY_SUMMARIES[fac.id] || 'Emergency medical care with tourist support.';
+
+            return (
+              <div
+                key={fac.id}
+                onClick={() => setActiveFacilityModal(fac)}
+                className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all flex flex-col justify-between space-y-4 cursor-pointer"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                    <span className="font-bold text-slate-900 dark:text-white text-xs">{fac.type}</span>
+                    <span>{fac.area}</span>
+                  </div>
+
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-lg mb-2 leading-snug">
+                    {fac.name}
+                  </h3>
+
+                  {/* 5-7 Words Information */}
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-200">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                      {t('summary')}
+                    </span>
+                    <p className="font-medium leading-snug">
+                      {shortSummary}
+                    </p>
+                  </div>
                 </div>
 
-                <h3 className="font-extrabold text-slate-900 text-lg mb-1 leading-snug">
-                  {fac.name}
-                </h3>
-                <p className="text-xs text-slate-600 mb-3">{fac.address}</p>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveFacilityModal(fac);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{t('details')}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
-                <div className="space-y-1 text-xs text-slate-600 bg-white p-3.5 rounded-2xl border border-slate-200/70">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Wait Time:</span>
-                    <span className="font-semibold text-slate-800">{fac.estimatedWaitTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Languages:</span>
-                    <span>{fac.languages.join(', ')}</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                    <span className="font-semibold text-slate-700">Insurance: </span>
-                    {fac.insuranceAccepted}
-                  </div>
+      {/* Pop-up Modal for Facility Details */}
+      {activeFacilityModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 relative max-h-[85vh] overflow-y-auto">
+            <button
+              onClick={() => setActiveFacilityModal(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="space-y-4">
+              <div>
+                <span className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider block mb-1">
+                  {activeFacilityModal.type} · {activeFacilityModal.area}
+                </span>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  {activeFacilityModal.name}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {activeFacilityModal.address}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs text-slate-700 dark:text-slate-200">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Estimated Wait:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{activeFacilityModal.estimatedWaitTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Languages:</span>
+                  <span className="font-semibold">{activeFacilityModal.languages.join(', ')}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">Insurance Direct Billing: </span>
+                  {activeFacilityModal.insuranceAccepted}
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between gap-3 text-xs">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <a
-                  href={`tel:${fac.phone.replace(/\s+/g, '')}`}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors"
+                  href={`tel:${activeFacilityModal.phone.replace(/\s+/g, '')}`}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-bold text-xs hover:bg-slate-800 transition-colors shadow-xs"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Call {fac.phone}</span>
+                  <span>Call {activeFacilityModal.phone}</span>
                 </a>
-
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    fac.googleMapsQuery
+                    activeFacilityModal.googleMapsQuery
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-slate-600 hover:text-slate-900 font-bold"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   <MapPin className="w-3.5 h-3.5" />
-                  <span>Directions</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <span>Google Maps</span>
+                  <ExternalLink className="w-3 h-3 ml-0.5" />
                 </a>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 };

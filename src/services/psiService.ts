@@ -24,52 +24,64 @@ function getStatusDescription(status: RegionalPsiData['status']): string {
   }
 }
 
-export async function fetchLiveSingaporePsi(): Promise<{
-  data: Record<SingaporeRegion, RegionalPsiData>;
+export interface PsiFetchResult {
+  data: Record<SingaporeRegion, RegionalPsiData> | null;
   isLive: boolean;
   timestamp: string;
-}> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+  error?: string | null;
+}
 
-    // Fetch live PSI and PM2.5 concurrently from server proxy endpoints
-    const [psiRes, pm25Res] = await Promise.all([
-      fetch('/api/psi', {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      }),
-      fetch('/api/pm25', {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      }).catch(() => null),
-    ]);
+export async function fetchLiveSingaporePsi(): Promise<PsiFetchResult> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    // Sub-goal 2: Live data from National Environment Agency (NEA) appears, fetched only through /api/psi
+    const psiRes = await fetch('/api/psi', {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
 
     clearTimeout(timeoutId);
 
+    if (psiRes.status === 503) {
+      const errJson = await psiRes.json().catch(() => null);
+      return {
+        data: null,
+        isLive: false,
+        timestamp: new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+        error: errJson?.message || 'Data feed refused: API key is not configured.',
+      };
+    }
+
     if (!psiRes.ok) {
-      throw new Error(`PSI API returned status ${psiRes.status}`);
+      return {
+        data: null,
+        isLive: false,
+        timestamp: new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+        error: `Air quality data from the National Environment Agency was refused (Server returned status ${psiRes.status}).`,
+      };
     }
 
     const psiJson = await psiRes.json();
-    const pm25Json = pm25Res && pm25Res.ok ? await pm25Res.json().catch(() => null) : null;
-
-    // Support both v2 wrapper { code: 0, data: { items: [...] } } and v1 { items: [...] }
     const psiItems = psiJson?.data?.items || psiJson?.items || [];
     const latestPsiItem = psiItems[0];
 
-    if (!latestPsiItem || !latestPsiItem.readings) {
-      throw new Error('Invalid format from PSI feed');
+    // Sub-goal 3: When data is empty, say so in plain words
+    if (!latestPsiItem || !latestPsiItem.readings || Object.keys(latestPsiItem.readings).length === 0) {
+      return {
+        data: null,
+        isLive: false,
+        timestamp: new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+        error: 'Air quality data from the National Environment Agency is currently empty.',
+      };
     }
-
-    const pm25Items = pm25Json?.data?.items || pm25Json?.items || [];
-    const latestPm25Item = pm25Items[0];
 
     const psi24 = latestPsiItem.readings.psi_twenty_four_hourly || {};
     const pm25OneHr =
-      latestPm25Item?.readings?.pm25_one_hourly ||
       latestPsiItem.readings.pm25_one_hourly ||
       latestPsiItem.readings.pm25_twenty_four_hourly ||
+      latestPsiItem.readings.pm25_sub_index ||
       {};
 
     const rawTime =
@@ -118,8 +130,8 @@ export async function fetchLiveSingaporePsi(): Promise<{
         psiVal = Math.round(psi24['national'] ?? computedNationalPsi);
         pm25Val = Math.round(pm25OneHr['national'] ?? computedNationalPm25);
       } else {
-        psiVal = Math.round(psi24[r.apiKey] ?? 70);
-        pm25Val = Math.round(pm25OneHr[r.apiKey] ?? 25);
+        psiVal = Math.round(Number(psi24[r.apiKey]) || computedNationalPsi);
+        pm25Val = Math.round(Number(pm25OneHr[r.apiKey]) || computedNationalPm25);
       }
 
       const status = determinePsiStatus(psiVal);
@@ -139,13 +151,21 @@ export async function fetchLiveSingaporePsi(): Promise<{
       data: result as Record<SingaporeRegion, RegionalPsiData>,
       isLive: true,
       timestamp: formattedTime,
+      error: null,
     };
-  } catch (err) {
-    console.warn('Using NEA cached baseline data due to network:', err);
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    const isTimeout = err?.name === 'AbortError' || err?.message?.includes('aborted');
+
+    // Sub-goal 3: When the data is slow, empty or refused, the screen says so in plain words.
+    // Guardrail: Never invent data. If the API fails, show a message, not sample rows.
     return {
-      data: FALLBACK_PSI_DATA as Record<SingaporeRegion, RegionalPsiData>,
+      data: null,
       isLive: false,
-      timestamp: 'Simulated Baseline (Live fallback)',
+      timestamp: new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }),
+      error: isTimeout
+        ? 'The connection to the National Environment Agency is taking longer than expected. Please wait or tap Retry.'
+        : 'Air quality data is temporarily unavailable from the National Environment Agency. Please check your connection or tap Retry.',
     };
   }
 }
